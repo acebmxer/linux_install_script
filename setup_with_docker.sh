@@ -80,6 +80,8 @@ sudo usermod -aG docker $USER
 
 newgrp docker
 
+exit
+
 # Reboot system
 echo "Rebooting system..."
 sudo reboot
