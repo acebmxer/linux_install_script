@@ -44,8 +44,8 @@ if [[ ! -d "/mnt/Linux" ]]; then
     exit 1
 fi
 
-# Run VMware Tools installation
-echo "Running VMware Tools installation..."
+# Run XCP-NG Tools installation
+echo "Running XCP-NG Tools installation..."
 bash /mnt/Linux/install.sh && umount /mnt
 '
 
