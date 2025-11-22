@@ -17,7 +17,7 @@ sudo timedatectl set-timezone America/New_York
 echo "Current system time:"
 timedatectl
 
-# Clone dotfiles repository and run install script
+# Clone dotfiles repository and run install script as user
 echo "Cloning dotfiles repository..."
 git clone https://github.com/flipsidecreations/dotfiles.git
 cd dotfiles || exit
@@ -29,28 +29,32 @@ echo "Changing default shell to zsh..."
 chsh -s /bin/zsh
 cd
 
-# Switch to root user to repeat process
-echo "Switching to root user to repeat setup..."
-sudo -i
+# Run setup steps as root in a subshell
+sudo bash <<'EOF'
+# Clone dotfiles repository and run install script as root
 git clone https://github.com/flipsidecreations/dotfiles.git
 cd dotfiles || exit
 echo "Running dotfiles installation script as root..."
 ./install.sh
 
-# Change default shell to zsh again as root
+# Change default shell to zsh for root
 echo "Changing default shell to zsh for root..."
 chsh -s /bin/zsh
 cd
 
 # Pause and prompt for VMware Tools ISO if not already inserted
-pause_for_vmtools
+echo "Please insert the XCP-NG Tools ISO and press [Enter] when ready..."
+read -r
+mount /dev/cdrom /mnt
+if [[ ! -d "/mnt" ]]; then
+    echo "Error: XCP-NG Tools ISO not found. Please insert the ISO and try again."
+    exit 1
+fi
 
 # Run VMware Tools installation
 echo "Running VMware Tools installation..."
-bash -c "bash /mnt/Linux/install.sh && umount /mnt"
-
-# Exit root session
-exit
+bash /mnt/Linux/install.sh && umount /mnt
+EOF
 
 # Download and install topgrade
 echo "Downloading and installing topgrade..."
