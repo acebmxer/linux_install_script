@@ -76,21 +76,53 @@ chsh -s "$(command -v zsh)" "$USER"
 info "Setting shell to zsh for root …"
 run_as_root usermod -s "$(command -v zsh)" root
 
-# --------------------------------------------------------------------------- #
+# ---------- ----------------------------------- #
 # 5️⃣  XCP‑NG Tools – conflict‑free install
-# --------------------------------------------------------------------------- #
+# ---------- ----------------------------------- #
 info "Installing XCP‑NG Tools …"
-run_as_root bash -c '
-    # Grab the latest .deb package name from the XCP‑NG release page
-    XCP_REPO="https://github.com/xcp-ng/xcp-ng-tools/releases/latest"
-    DEB="$(wget -qO- "$XCP_REPO" | grep -oP "href=\"\\K[^\".]*\\.deb\"")"
-    DEB="${DEB#*href=\x22}"
-    DEB="${DEB%\"}"
-    wget -qO /tmp/xcp_ng_latest.deb "$XCP_REPO/$DEB" || exit 1
-    apt-get update
-    apt-get install -y "/tmp/xcp_ng_latest.deb"
-    apt-mark auto xcp-ng-tools
-'
+
+# ------------------------------------------------------------------
+# Helper: Mount the ISO if it isn’t already mounted
+# ------------------------------------------------------------------
+mount_iso() {
+    if mountpoint -q /mnt; then
+        info "ISO already mounted at /mnt."
+    else
+        warn "ISO not mounted. Please insert the XCP‑NG ISO and press Enter to continue…"
+        read -r
+        run_as_root mount /dev/cdrom /mnt || { error "Failed to mount /dev/cdrom"; exit 1; }
+        if ! mountpoint -q /mnt; then
+            error "Mounting /dev/cdrom failed."
+            exit 1
+        fi
+        info "ISO mounted successfully."
+    fi
+}
+
+# ------------------------------------------------------------------
+# Helper: Verify that the installer script exists on the mounted ISO
+# ------------------------------------------------------------------
+ensure_installer() {
+    if [[ ! -f /mnt/Linux/install.sh ]]; then
+        error "Installer script /mnt/Linux/install.sh not found. "
+        error "Make sure the ISO is correctly mounted and contains the installer."
+        exit 1
+    fi
+}
+
+# ------------------------------------------------------------------
+# Execute the installation flow
+# ------------------------------------------------------------------
+mount_iso            # Mount the ISO if required
+ensure_installer     # Make sure the installer script is there
+
+# Run the ISO’s install script
+run_as_root bash /mnt/Linux/install.sh
+
+# Unmount the ISO
+run_as_root umount /mnt || warn "Failed to unmount /mnt – you may need to unmount it manually."
+
+info "XCP‑NG Tools installation completed."
 
 # --------------------------------------------------------------------------- #
 # 6️⃣  Topgrade – download & install
