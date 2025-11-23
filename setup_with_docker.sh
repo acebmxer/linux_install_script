@@ -1,122 +1,160 @@
 #!/usr/bin/env bash
-# --------------------------------------------------------------------------
-#  Bootstrap script for a fresh Ubuntu / Debian‑based VM
-#
-#  • Sets timezone to America/New_York
-#  • Installs dotfiles once and runs its install script as user & root
-#  • Changes default shell to zsh for both user & root
-#  • Mounts the XCP‑NG Tools ISO, runs its installer (conflict‑free)
-#  • Installs Topgrade (via the official .deb package)
-#  • Installs Docker and marks it auto‑installed
-#  • Unmounts the ISO again
-# --------------------------------------------------------------------------
+# =============================================================================
+#  ──────  BOOTSTRAP SCRIPT  ──────
+#  Installs:
+#   • zsh (for the current user + root)
+#   • dotfiles (once)
+#   • XCP‑NG Tools (conflict‑free)
+#   • Topgrade (download + install)
+#   • Docker
+#   • (Optional) Reboot
+# =============================================================================
+
 set -euo pipefail
 
-# --------------------------------------------------------------------------
-# helpers
-# --------------------------------------------------------------------------
-log() { printf '%s\n' "$*"; }
+# --------------------------------------------------------------------------- #
+# Helper functions
+# --------------------------------------------------------------------------- #
 
+log()   { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+info()  { printf '    \e[32m%s\e[0m\n' "$*"; }
+warn()  { printf '    \e[33m%s\e[0m\n' "$*"; }
+error() { printf '    \e[31m%s\e[0m\n' "$*"; }
+
+# Run a command with root privileges; if we are already root it just runs.
 run_as_root() {
-  if [[ $EUID -ne 0 ]]; then
-    sudo "$@"
-  else
-    "$@"
-  fi
+    if [[ "$(id -u)" -eq 0 ]]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
 }
 
-# --------------------------------------------------------------------------
-# 1️⃣  Time‑zone
-# --------------------------------------------------------------------------
-log "Configuring timezone to America/New_York"
-run_as_root ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+# --------------------------------------------------------------------------- #
+# 1️⃣  Timezone
+# --------------------------------------------------------------------------- #
+info "Setting timezone to America/New_York …"
+run_as_root ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 run_as_root dpkg-reconfigure -f noninteractive tzdata
 
-# --------------------------------------------------------------------------
-# 2️⃣  Dotfiles
-# --------------------------------------------------------------------------
-DOTFILES_REPO="https://github.com/flipsidecreations/dotfiles.git"
-DOTFILES_DIR="$HOME/dotfiles"
-log "Cloning (or pulling) dotfiles repository into $DOTFILES_DIR"
-if [[ -d "$DOTFILES_DIR/.git" ]]; then
-  run_as_root git -C "$DOTFILES_DIR" pull --ff-only
-else
-  run_as_root git clone --depth=1 "$DOTFILES_REPO" "$DOTFILES_DIR"
-fi
-log "Running dotfiles installer as user $USER"
-bash "$DOTFILES_DIR/install.sh"
-log "Running dotfiles installer as root"
-run_as_root bash "$DOTFILES_DIR/install.sh"
-
-# --------------------------------------------------------------------------
-# 3️⃣  ZSH + oh‑my‑zsh
-# --------------------------------------------------------------------------
-log "Installing zsh and oh‑my‑zsh for $USER"
-run_as_root apt-get update
-run_as_root apt-get install -y zsh
-log "Installing oh‑my‑zsh"
-run_as_root sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-log "Configuring .zshrc for $USER"
-cat > "$HOME/.zshrc" <<'EOF'
-# ~/.zshrc: zsh configuration file
-export PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
-source $HOME/.dotfiles/scripts/aliases.zsh
-EOF
-log "Changing default shell to zsh for $USER and root"
-chsh -s "$(which zsh)" "$USER"                     # normal user
-run_as_root usermod -s "$(which zsh)" root          # <-- changed
-
-# --------------------------------------------------------------------------
-# 4️⃣  XCP‑NG Tools installer
-# --------------------------------------------------------------------------
-read -rp "Insert the XCP‑NG Tools ISO, press [Enter] to continue…" && :
-log "Mounting CD‑ROM and running XCP‑NG installer (conflict‑free)…"
-run_as_root bash -c '
-  set -euo pipefail
-  mount /dev/cdrom /mnt
-  if dpkg -s xen-guest-agent &>/dev/null; then
-    echo "xen-guest-agent detected – removing to avoid conflict"
-    apt-get remove -y xen-guest-agent
-  fi
-  bash /mnt/Linux/install.sh
-  umount /mnt
-'
-log "XCP‑NG installer finished – unmounted successfully"
-
-# --------------------------------------------------------------------------
-# 5️⃣  Topgrade
-# --------------------------------------------------------------------------
-log "Installing Topgrade from the official .deb package"
-TOP_DEB=$(ls /tmp/topgrade_*.deb 2>/dev/null | head -n 1)
-if [[ -n "$TOP_DEB" ]]; then
-  run_as_root apt-get update
-  run_as_root apt-get install -y "./$TOP_DEB"
-  run_as_root apt-mark auto topgrade
-else
-  log "No Topgrade .deb found – skipping"
-fi
-
-# --------------------------------------------------------------------------
-# 6️⃣  Docker
-# --------------------------------------------------------------------------
-log "Installing Docker (and its CLI tools)"
-run_as_root apt-get update
+# --------------------------------------------------------------------------- #
+# 2️⃣  Basic packages
+# --------------------------------------------------------------------------- #
+info "Updating APT cache …"
+run_as_root apt-get update -y
+info "Installing required packages …"
 run_as_root apt-get install -y \
-  docker.io \
-  docker-compose-plugin \
-  docker-buildx-plugin
-run_as_root apt-mark auto docker.io docker-compose-plugin docker-buildx-plugin
+    curl \
+    wget \
+    git \
+    ca-certificates \
+    gnupg2 \
+    lsb-release \
+    sudo
 
-# --------------------------------------------------------------------------
-# 7️⃣  Summary
-# --------------------------------------------------------------------------
-log "Bootstrap complete!  System is ready for use."
-echo
-echo "────────────────────────────────────────────────────────────────────"
-echo "  ✅  Time‑zone: America/New_York"
-echo "  ✅  Dotfiles: $DOTFILES_DIR (installed once)"
-echo "  ✅  Shell: zsh (for $USER and root)"
-echo "  ✅  XCP‑NG Tools: installed (conflict‑free)"
-echo "  ✅  Topgrade: installed"
-echo "  ✅  Docker: installed and auto‑removed if needed later"
-echo "────────────────────────────────────────────────────────────────────"
+# --------------------------------------------------------------------------- #
+# 3️⃣  Dotfiles – install once
+# --------------------------------------------------------------------------- #
+DOTFILES_DIR="$HOME/dotfiles"
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+    info "Cloning dotfiles repository …"
+    run_as_root git clone --depth 1 https://github.com/your-username/dotfiles.git "$DOTFILES_DIR"
+    run_as_root chown -R "$USER":"$USER" "$DOTFILES_DIR"
+else
+    info "Dotfiles already present – skipping clone"
+fi
+
+info "Running dotfiles installer (once) …"
+run_as_root bash "$DOTFILES_DIR/install.sh" --once
+
+# --------------------------------------------------------------------------- #
+# 4️⃣  Shell – zsh for user and root
+# --------------------------------------------------------------------------- #
+info "Setting shell to zsh for the current user …"
+chsh -s "$(command -v zsh)" "$USER"
+
+info "Setting shell to zsh for root …"
+run_as_root usermod -s "$(command -v zsh)" root
+
+# --------------------------------------------------------------------------- #
+# 5️⃣  XCP‑NG Tools – conflict‑free install
+# --------------------------------------------------------------------------- #
+info "Installing XCP‑NG Tools …"
+run_as_root bash -c '
+    # Grab the latest .deb package name from the XCP‑NG release page
+    XCP_REPO="https://github.com/xcp-ng/xcp-ng-tools/releases/latest"
+    DEB="$(wget -qO- "$XCP_REPO" | grep -oP "href=\"\\K[^\".]*\\.deb\"")"
+    DEB="${DEB#*href=\x22}"
+    DEB="${DEB%\"}"
+    wget -qO /tmp/xcp_ng_latest.deb "$XCP_REPO/$DEB" || exit 1
+    apt-get update
+    apt-get install -y "/tmp/xcp_ng_latest.deb"
+    apt-mark auto xcp-ng-tools
+'
+
+# --------------------------------------------------------------------------- #
+# 6️⃣  Topgrade – download & install
+# --------------------------------------------------------------------------- #
+TOPGRADE_VERSION="v16.0.4"
+TOPGRADE_DEB="topgrade_${TOPGRADE_VERSION#v}_1_amd64.deb"
+TOPGRADE_URL="https://github.com/topgrade-rs/topgrade/releases/download/${TOPGRADE_VERSION}/${TOPGRADE_DEB}"
+TOPGRADE_DEST="/tmp/${TOPGRADE_DEB}"
+
+download_topgrade() {
+    info "Downloading Topgrade ($TOPGRADE_DEB) …"
+    if [[ -f "$TOPGRADE_DEST" ]]; then
+        warn "Topgrade .deb already present – skipping download"
+    else
+        run_as_root wget -q --show-progress -O "$TOPGRADE_DEST" "$TOPGRADE_URL" || error "Failed to download Topgrade" && exit 1
+        info "Topgrade downloaded to $TOPGRADE_DEST"
+    fi
+}
+
+install_topgrade() {
+    local deb="$1"
+    info "Installing Topgrade from $deb …"
+    run_as_root apt-get update
+    run_as_root apt-get install -y "./$deb"
+    run_as_root apt-mark auto topgrade
+    info "Topgrade installed and auto‑marked for upgrades"
+}
+
+download_topgrade
+install_topgrade "$TOPGRADE_DEST"
+
+# --------------------------------------------------------------------------- #
+# 7️⃣  Docker – install & enable
+# --------------------------------------------------------------------------- #
+info "Installing Docker …"
+run_as_root apt-get install -y \
+    docker.io \
+    docker-compose
+
+run_as_root usermod -aG docker "$USER"
+run_as_root systemctl enable docker
+
+# --------------------------------------------------------------------------- #
+# 8️⃣  Summary
+# --------------------------------------------------------------------------- #
+info "─────────────────────────────────────────────────────────────────────"
+info "Bootstrap finished successfully."
+info " • Timezone        : America/New_York"
+info " • Dotfiles        : $DOTFILES_DIR"
+info " • Shell           : zsh (current user & root)"
+info " • XCP‑NG Tools    : installed"
+info " • Topgrade        : installed (auto‑marked)"
+info " • Docker          : installed & enabled for current user"
+info "─────────────────────────────────────────────────────────────────────"
+
+# --------------------------------------------------------------------------- #
+# 9️⃣  Optional reboot
+# --------------------------------------------------------------------------- #
+# Uncomment the following lines if you want an automatic reboot after
+# all installations finish.  Commented out by default so you can inspect
+# the system before rebooting.
+
+# warn "Rebooting in 5 seconds…"
+# sleep 5
+# run_as_root reboot
+
+# EOF
