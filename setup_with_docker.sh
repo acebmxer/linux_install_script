@@ -58,7 +58,7 @@ run_as_root apt-get install -y \
 DOTFILES_DIR="$HOME/dotfiles"
 if [[ ! -d "$DOTFILES_DIR" ]]; then
     info "Cloning dotfiles repository …"
-    run_as_root git clone --depth 1 https://github.com/your-username/dotfiles.git "$DOTFILES_DIR"
+    run_as_root git clone --depth 1 https://github.com/flipsidecreations/dotfiles.git "$DOTFILES_DIR"
     run_as_root chown -R "$USER":"$USER" "$DOTFILES_DIR"
 else
     info "Dotfiles already present – skipping clone"
