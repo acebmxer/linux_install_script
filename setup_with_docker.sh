@@ -94,6 +94,9 @@ ensure_installer
 remove_conflicting_packages
 run_as_root bash /mnt/Linux/install.sh
 run_as_root umount /mnt || warn "Failed to unmount /mnt – you may need to unmount it manually."
+# Wait a bit so the system settles
+info "Pausing for 10 seconds to let services start..."
+sleep 10
 info "XCP‑NG Tools installation completed."
 # -----------------------------------------------------------------
 # 6️⃣  Topgrade – download & install
