@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
-# =============================================================================
-#  ──────  BOOTSTRAP SCRIPT  ──────
-#  Installs:
-#   • zsh (for the current user + root)
-#   • dotfiles (once)
-#   • XCP‑NG Tools (conflict‑free)
-#   • Topgrade (download + install)
-#   • Docker
-#   • (Optional) Reboot
-# =============================================================================
-
-set -euo pipefail
-
-# --------------------------------------------------------------------------- #
-# Helper functions
-# --------------------------------------------------------------------------- #
-
-log()   { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
-info()  { printf '    \e[32m%s\e[0m\n' "$*"; }
-warn()  { printf '    \e[33m%s\e[0m\n' "$*"; }
-error() { printf '    \e[31m%s\e[0m\n' "$*"; }
-
-# Run a command with root privileges; if we are already root it just runs.
+# ===================================================================
+#   flipsidebootstrap (merged & upgraded)
+#   ----------------------------------------------------------------
+#   Timezone  ➜ America/New_York
+#   Dotfiles  ➜ $HOME/dotfiles
+#   Shell     ➜ zsh (user & root)
+#   XCP‑NG    ➜ installed
+#   Topgrade  ➜ installed
+#   Docker    ➜ installed & verified
+# ===================================================================
+# 0️⃣  Helper functions
+# -----------------------------------------------------------------
+log()  { echo "[LOG]   $*"; }
+info() { echo "[INFO]  $*"; }
+warn() { echo "[WARN]  $*" >&2; }
+error(){ echo "[ERROR] $*" >&2; }
+# Only run as root when needed
 run_as_root() {
     if [[ "$(id -u)" -eq 0 ]]; then
         "$@"
@@ -29,17 +23,13 @@ run_as_root() {
         sudo "$@"
     fi
 }
-
-# --------------------------------------------------------------------------- #
 # 1️⃣  Timezone
-# --------------------------------------------------------------------------- #
+# -----------------------------------------------------------------
 info "Setting timezone to America/New_York …"
 run_as_root ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 run_as_root dpkg-reconfigure -f noninteractive tzdata
-
-# --------------------------------------------------------------------------- #
 # 2️⃣  Basic packages
-# --------------------------------------------------------------------------- #
+# -----------------------------------------------------------------
 info "Updating APT cache …"
 run_as_root apt-get update -y
 info "Installing required packages …"
@@ -51,10 +41,8 @@ run_as_root apt-get install -y \
     gnupg2 \
     lsb-release \
     sudo
-
-# --------------------------------------------------------------------------- #
 # 3️⃣  Dotfiles – install once
-# --------------------------------------------------------------------------- #
+# -----------------------------------------------------------------
 DOTFILES_DIR="$HOME/dotfiles"
 if [[ ! -d "$DOTFILES_DIR" ]]; then
     info "Cloning dotfiles repository …"
@@ -63,27 +51,17 @@ if [[ ! -d "$DOTFILES_DIR" ]]; then
 else
     info "Dotfiles already present – skipping clone"
 fi
-
 info "Running dotfiles installer (once) …"
 run_as_root bash "$DOTFILES_DIR/install.sh" --once
-
-# --------------------------------------------------------------------------- #
 # 4️⃣  Shell – zsh for user and root
-# --------------------------------------------------------------------------- #
+# -----------------------------------------------------------------
 info "Setting shell to zsh for the current user …"
 chsh -s "$(command -v zsh)" "$USER"
-
 info "Setting shell to zsh for root …"
 run_as_root usermod -s "$(command -v zsh)" root
-
-# ---------- --------------------------------------------------- #
 # 5️⃣  XCP‑NG Tools – conflict‑free install
-# ---------- --------------------------------------------------- #
+# -----------------------------------------------------------------
 info "Installing XCP‑NG Tools …"
-
-# ------------------------------------------------------------------
-# Helper: Mount the ISO if it isn’t already mounted
-# ------------------------------------------------------------------
 mount_iso() {
     if mountpoint -q /mnt; then
         info "ISO already mounted at /mnt."
@@ -98,10 +76,6 @@ mount_iso() {
         info "ISO mounted successfully."
     fi
 }
-
-# ------------------------------------------------------------------
-# Helper: Verify that the installer script exists on the mounted ISO
-# ------------------------------------------------------------------
 ensure_installer() {
     if [[ ! -f /mnt/Linux/install.sh ]]; then
         error "Installer script /mnt/Linux/install.sh not found."
@@ -109,133 +83,98 @@ ensure_installer() {
         exit 1
     fi
 }
-
-# ------------------------------------------------------------------
-# Remove any existing xen‑guest‑agent that might conflict
-# ------------------------------------------------------------------
 remove_conflicting_packages() {
     info "Removing any conflicting xen‑guest‑agent package…"
     run_as_root apt-get remove -y xen-guest-agent || warn "Failed to remove xen-guest-agent (may not be installed)."
 }
-
-# ------------------------------------------------------------------
-# Execute the installation flow
-# ------------------------------------------------------------------
-mount_iso            # Mount the ISO if required
-ensure_installer     # Verify the installer is present
-remove_conflicting_packages  # ← **New step** before running the ISO installer
-
-# Run the ISO’s install script
+mount_iso
+ensure_installer
+remove_conflicting_packages
 run_as_root bash /mnt/Linux/install.sh
-
-# Unmount the ISO
 run_as_root umount /mnt || warn "Failed to unmount /mnt – you may need to unmount it manually."
-
 info "XCP‑NG Tools installation completed."
-
-# --------------------------------------------------------------------------- #
 # 6️⃣  Topgrade – download & install
-# --------------------------------------------------------------------------- #
+# -----------------------------------------------------------------
 TOPGRADE_VERSION="v16.0.4"
 TOPGRADE_DEB="topgrade_${TOPGRADE_VERSION}-1_amd64.deb"
 TOPGRADE_URL="https://github.com/topgrade-rs/topgrade/releases/download/${TOPGRADE_VERSION}/${TOPGRADE_DEB}"
-TOPGRADE_DEST="$home/${TOPGRADE_DEB}"
-
+TOPGRADE_DEST="$HOME/${TOPGRADE_DEB}"
 download_topgrade() {
-    info "Downloading Topgrade ($TOPGRADE_DEB) …"
-    if [[ -f "$TOPGRADE_DEST" ]]; then
-        warn "Topgrade .deb already present – skipping download"
-    else
-        run_as_root wget -q --show-progress -O "$TOPGRADE_DEST" "$TOPGRADE_URL" || error "Failed to download Topgrade" && exit 1
-        info "Topgrade downloaded to $TOPGRADE_DEST"
-    fi
+    info "Downloading Topgrade ($TOPGRADE_VERSION) …"
+    run_as_root wget -q --show-progress -O "$TOPGRADE_DEST" "$TOPGRADE_URL" || { error "Failed to download Topgrade"; exit 1; }
 }
-
 install_topgrade() {
     local deb="$1"
     info "Installing Topgrade from $deb …"
     run_as_root apt-get update
     run_as_root apt-get install -y "./$deb"
     run_as_root apt-mark auto topgrade
-    info "Topgrade installed and auto‑marked for upgrades"
 }
-
 download_topgrade
 install_topgrade "$TOPGRADE_DEST"
 
-# --------------------------------------------------------------------------- #
-# 7️⃣  Docker – install & enable (official Docker repo)
-# -----------------------------------------------
-info "Installing Docker from Docker’s official APT repository …"
-
-# 1️⃣  Update cache – this will be needed twice, once before the key
-#     and once after the repo is added
-run_as_root apt-get update
-
-# 2️⃣  Install dependencies required for the Docker repo
-run_as_root apt-get install -y ca-certificates curl
-
-# 3️⃣  Create key‑ring directory (if it doesn't exist yet)
-run_as_root install -m 0755 -d /etc/apt/keyrings
-
-# 4️⃣  Download Docker’s official GPG key into the key‑ring
-run_as_root curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-    -o /etc/apt/keyrings/docker.asc
-run_as_root chmod a+r /etc/apt/keyrings/docker.asc
-
-# 5️⃣  Add the Docker repository
-run_as_root sh -c \
-'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-https://download.docker.com/linux/ubuntu \
-$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" \
-> /etc/apt/sources.list.d/docker.list'
-
-# 6️⃣  Update again to pick up the new repo
-run_as_root apt-get update
-
-# 7️⃣  Install Docker‑CE (and the newer “plugin” style Compose)
-run_as_root apt-get install -y \
-    docker-ce \
-    docker-ce-cli \
-    containerd.io \
-    docker-buildx-plugin \
-    docker-compose-plugin
-
-# 8️⃣  Ensure the `docker` group exists (Docker‑CE creates it on install,
-#     but we keep this for safety)
-run_as_root groupadd -f docker
-
-# 9️⃣  Add the current user to the `docker` group
-run_as_root usermod -aG docker "$USER"
-
-# (Optional) Immediately apply the new group membership in the current shell
-# Comment out if you prefer a reboot / relogin instead
-run_as_root newgrp docker
-
-info "Docker installed and user `$USER` added to the docker group."
-
-# --------------------------------------------------------------------------- #
-# 8️⃣  Summary
-# --------------------------------------------------------------------------- #
-info "─────────────────────────────────────────────────────────────────────"
-info "Bootstrap finished successfully."
-info " • Timezone        : America/New_York"
-info " • Dotfiles        : $DOTFILES_DIR"
-info " • Shell           : zsh (current user & root)"
-info " • XCP‑NG Tools    : installed"
-info " • Topgrade        : installed (auto‑marked)"
-info " • Docker          : installed & enabled for current user"
-info "─────────────────────────────────────────────────────────────────────"
-
-# --------------------------------------------------------------------------- #
-# 9️⃣  Optional reboot
-# --------------------------------------------------------------------------- #
-# Uncomment the following lines if you want an automatic reboot after
-# all installations finish.  Commented out by default so you can inspect
-# the system before rebooting.
-
-# warn "Rebooting in 5 seconds…"
-# sleep 5
-# run_as_root reboot
-
-# EOF
+# -----------------------------------------------------------------
+# 👉  **Run Topgrade immediately after installation**
+# -----------------------------------------------------------------
+info "Running Topgrade to upgrade the system …"
+# `--yes` (or `-y`) skips the interactive confirmation
+topgrade --yes
+# -----------------------------------------------------------------
+# 7️⃣  Docker – install & verify
+# -----------------------------------------------------------------
+info "Installing Docker …"
+run_as_root apt-get install -y docker.io
+run_as_root systemctl enable --now docker
+# 7a. Docker verification tests
+info "Running Docker verification tests…"
+# Make sure we can talk to the daemon
+docker_cmd() { run_as_root docker "$@"; }
+# 8a. Verify the client can reach the daemon
+docker_cmd version
+docker_cmd info
+# 8b. Pull & run the hello‑world image
+HELLO_IMG="hello:latest"
+info "Pulling ${HELLO_IMG} image …"
+run_as_root docker pull "$HELLO_IMG"
+info "Running ${HELLO_IMG} container to confirm the image works …"
+run_as_root docker run --rm "$HELLO_IMG"
+# 8c. Quick compose test
+info "Running a quick docker‑compose test …"
+COMPOSE_DIR="$(mktemp -d)"
+cat > "${COMPOSE_DIR}/docker-compose.yml" <<'EOF'
+version: "3.8"
+services:
+  hello:
+    image: hello:latest
+    container_name: hello_test
+EOF
+run_as_root docker compose -f "${COMPOSE_DIR}/docker-compose.yml" up -d
+sleep 2
+run_as_root docker compose -f "${COMPOSE_DIR}/docker-compose.yml" ps
+run_as_root docker compose -f "${COMPOSE_DIR}/docker-compose.yml" down
+rm -rf "${COMPOSE_DIR}"
+info "Docker verification complete."
+# 9️⃣  Final summary
+# -----------------------------------------------------------------
+info "All components are now installed and, for Docker, all tests passed successfully!"
+#  🔄  Reboot prompt – now or later?
+# -----------------------------------------------------------------
+echo
+info "The installation is finished. A reboot is recommended to apply all changes."
+read -rp "Reboot now? (y/N) " REBOOT_CHOICE
+REBOOT_CHOICE=${REBOOT_CHOICE:-N}
+case "$REBOOT_CHOICE" in
+  y|Y|yes|YES)
+    info "Rebooting…"
+    run_as_root reboot
+    ;;
+  n|N|no|NO)
+    warn "Remember to reboot the server later to complete the setup."
+    ;;
+  *)
+    error "Unexpected input – exiting without reboot."
+    ;;
+esac
+# If we reach this point, the script has already rebooted (or not).
+# No further action is required.
+exit 0
