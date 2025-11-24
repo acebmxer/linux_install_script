@@ -23,6 +23,7 @@ run_as_root() {
         sudo "$@"
     fi
 }
+# -----------------------------------------------------------------
 # 2️⃣  Basic packages
 # -----------------------------------------------------------------
 info "Updating APT cache …"
@@ -58,30 +59,31 @@ info "Running Docker verification tests…"
 docker_cmd() { run_as_root docker "$@"; }
 # 8a. Verify the client can reach the daemon
 docker_cmd version
-# 8b. Pull & run the hello‑world image
-HELLO_IMG="hello-world:latest"
-info "Pulling ${HELLO_IMG} image …"
-docker pull "$HELLO_IMG"
-info "Running ${HELLO_IMG} container to confirm the image works …"
-docker run --rm hello-world
-docker stop "hello-world"
-# docker image rm "heello-world:latest"
-# 8c. Quick compose test
-info "Running a quick docker‑compose test …"
-COMPOSE_DIR="$home"
-cat > "${COMPOSE_DIR}/docker-compose.yml" <<'EOF'
-version: "3.8"
-services:
-  hello:
-    image: hello-world:latest
-    container_name: hello-world_test
-EOF
-docker compose -f "${COMPOSE_DIR}/docker-compose.yml" up -d
-sleep 2
-docker compose -f "${COMPOSE_DIR}/docker-compose.yml" ps
-docker compose -f "${COMPOSE_DIR}/docker-compose.yml" down
-rm -rf "${COMPOSE_DIR}"/docker-compose.yam
+docker_cmd info
 info "Docker verification complete."
+# -----------------------------------------------------------------
 # 9️⃣  Final summary
 # -----------------------------------------------------------------
 info "All components are now installed and, for Docker, all tests passed successfully!"
+# -----------------------------------------------------------------
+#  🔄  Reboot prompt – now or later?
+# -----------------------------------------------------------------
+echo
+info "The installation is finished. A reboot is recommended to apply all changes."
+read -rp "Reboot now? (y/N) " REBOOT_CHOICE
+REBOOT_CHOICE=${REBOOT_CHOICE:-N}
+case "$REBOOT_CHOICE" in
+  y|Y|yes|YES)
+    info "Rebooting…"
+    run_as_root reboot
+    ;;
+  n|N|no|NO)
+    warn "Remember to reboot the server later to complete the setup."
+    ;;
+  *)
+    error "Unexpected input – exiting without reboot."
+    ;;
+esac
+# If we reach this point, the script has already rebooted (or not).
+# No further action is required.
+exit 0
