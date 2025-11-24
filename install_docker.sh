@@ -63,12 +63,12 @@ HELLO_IMG="hello-world:latest"
 info "Pulling ${HELLO_IMG} image …"
 docker pull "$HELLO_IMG"
 info "Running ${HELLO_IMG} container to confirm the image works …"
-docker run --rm "$HELLO_IMG"
-docker stop "$HELLO_IMG"
-docker image rm "heello-world:latest"
+docker run --rm hello-world
+docker stop "hello-world"
+# docker image rm "heello-world:latest"
 # 8c. Quick compose test
 info "Running a quick docker‑compose test …"
-COMPOSE_DIR="$(mktemp -d)"
+COMPOSE_DIR="$home"
 cat > "${COMPOSE_DIR}/docker-compose.yml" <<'EOF'
 version: "3.8"
 services:
@@ -80,7 +80,7 @@ docker compose -f "${COMPOSE_DIR}/docker-compose.yml" up -d
 sleep 2
 docker compose -f "${COMPOSE_DIR}/docker-compose.yml" ps
 docker compose -f "${COMPOSE_DIR}/docker-compose.yml" down
-rm -rf "${COMPOSE_DIR}"
+rm -rf "${COMPOSE_DIR}"/docker-compose.yam
 info "Docker verification complete."
 # 9️⃣  Final summary
 # -----------------------------------------------------------------
