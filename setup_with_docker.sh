@@ -44,6 +44,7 @@ run_as_root apt-get install -y \
 # -----------------------------------------------------------------
 # 3️⃣  Dotfiles – install once
 # -----------------------------------------------------------------
+echo "Starting as regular user"
 git clone https://github.com/flipsidecreations/dotfiles.git
 cd dotfiles
 ./install.sh
@@ -51,11 +52,14 @@ chsh -s /bin/zsh
 # -----------------------------------------------------------------
 #    Dotfiles - Install for root
 # -----------------------------------------------------------------
-sudo -s
+sudo -s <<EOF
+echo "Now running as root"
 git clone https://github.com/flipsidecreations/dotfiles.git
 cd dotfiles
 ./install.sh
 chsh -s /bin/zsh
+EOF
+echo "Back to regular user."
 # -----------------------------------------------------------------
 # 5️⃣  XCP‑NG Tools – conflict‑free install
 # -----------------------------------------------------------------
