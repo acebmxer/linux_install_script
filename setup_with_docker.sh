@@ -115,7 +115,8 @@ install_topgrade
 # -----------------------------------------------------------------
 info "Running Topgrade to upgrade the system …"
 # `--yes` (or `-y`) skips the interactive confirmation
-# topgrade --yes
+topgrade --yes
+info "TopGrade has completed"
 # -----------------------------------------------------------------
 # 7️⃣  Docker – install & verify
 # -----------------------------------------------------------------
