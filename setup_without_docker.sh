@@ -110,7 +110,7 @@ topgrade --yes
 # -----------------------------------------------------------------
 # 9️⃣  Final summary
 # -----------------------------------------------------------------
-info "All components are now installed and, for Docker, all tests passed successfully!"
+info "All components are now installed and, all tests passed successfully!"
 #  🔄  Reboot prompt – now or later?
 # -----------------------------------------------------------------
 echo
