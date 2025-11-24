@@ -1,3 +1,28 @@
+#!/usr/bin/env bash
+# ===================================================================
+#   flipsidebootstrap (merged & upgraded)
+#   ----------------------------------------------------------------
+#   Timezone  ➜ America/New_York
+#   Dotfiles  ➜ $HOME/dotfiles
+#   Shell     ➜ zsh (user & root)
+#   XCP‑NG    ➜ installed
+#   Topgrade  ➜ installed
+#   Docker    ➜ installed & verified
+# ===================================================================
+# 0️⃣  Helper functions
+# -----------------------------------------------------------------
+log()  { echo "[LOG]   $*"; }
+info() { echo "[INFO]  $*"; }
+warn() { echo "[WARN]  $*" >&2; }
+error(){ echo "[ERROR] $*" >&2; }
+# Only run as root when needed
+run_as_root() {
+    if [[ "$(id -u)" -eq 0 ]]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
 # -----------------------------------------------------------------
 # 7️⃣  Docker – install & verify
 # -----------------------------------------------------------------
