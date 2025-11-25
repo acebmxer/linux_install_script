@@ -74,21 +74,18 @@ info "Running a quick apt‑update before topgrade."
 run_as_root apt-get update
 
 # ────────────────────────────────────────────────────────
-# 8️⃣ System upgrade – Topgrade (idempotent)
+# 8️⃣ System install – Topgrade (idempotent)
 # ────────────────────────────────────────────────────────
-needs_topgrade_update() {
-local current_version top_version
-current_version="$(topgrade --version | awk '{print $2}')"
-top_version="$(deb-get get topgrade | awk 'NR==1{print $2}')"
-[[ "$current_version" != "$top_version" ]]
-}
-if needs_topgrade_update; then
-info "Updating topgrade to the newest deb-get‑supplied version …"
-deb-get upgrade topgrade
+# Check if topgrade is installed
+deb-get query topgrade > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  info "Topgrade is not installed. Installing..."
+  deb-get install topgrade
 else
-info "Topgrade already up‑to‑date."
+  info "Topgrade already installed."
 fi
-
+deb-get upgrade topgrade
+info "Topgrade already up‑to‑date."
 info "Running topgrade …"
 # Run as the user; Topgrade will auto‑install missing packages
 topgrade
