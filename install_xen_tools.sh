@@ -26,26 +26,26 @@ run_as_root() {
 }
 
 # ------------------------------------------------------------------
-# NEW: Check / uninstall / keep `xe-guest-tools`
+# NEW: Check / uninstall / keep `xe-guest-utilities`
 # ------------------------------------------------------------------
 check_and_handle_xe_guest_tools() {
     # If the package is present, show its version
-    if dpkg -s xe-guest-tools > /dev/null 2>&1; then
-        ver=$(dpkg-query -W -f='${Version}' xe-guest-tools)
-        info "xe-guest-tools is installed, version $ver."
-        read -rp "Would you like to uninstall existing xe-guest-tools (v$ver) and install new one? [y/N] " ans
+    if dpkg -s xe-guest-utilities > /dev/null 2>&1; then
+        ver=$(dpkg-query -W -f='${Version}' xe-guest-utilities)
+        info "xe-guest-utilities is installed, version $ver."
+        read -rp "Would you like to uninstall existing xe-guest-utilities (v$ver) and install new one? [y/N] " ans
         case "$ans" in
             y|Y|yes|Yes)
-                info "Uninstalling existing xe-guest-tools..."
-                run_as_root apt-get remove -y xe-guest-tools || warn "Failed to remove xe-guest-tools."
+                info "Uninstalling existing xe-guest-utilities..."
+                run_as_root apt-get remove -y xe-guest-utilities || warn "Failed to remove xe-guest-utilities."
                 ;;
             *)
-                info "Keeping existing xe-guest-tools; skipping installation."
+                info "Keeping existing xe-guest-utilities; skipping installation."
                 return 1    # Signal: do not install
                 ;;
         esac
     else
-        info "xe-guest-tools is not installed."
+        info "xe-guest-utilities is not installed."
     fi
     return 0        # Signal: install
 }
@@ -59,7 +59,7 @@ info "Installing XCP‑NG Tools …"
 # 1️⃣  Check / uninstall / keep xe‑guest‑tools
 # ------------------------------------------------------------------
 if ! check_and_handle_xe_guest_tools; then
-    info "Installation aborted – leaving existing xe-guest-tools intact."
+    info "Installation aborted – leaving existing xe-guest-utilities intact."
     exit 0
 fi
 
