@@ -75,9 +75,10 @@ printc() {
 clear
 printc "$HEADER" "To begin select of 1 of 4 options."
 printc "$OPTION" "1.  To fully upgrade the system with Topgrade and Install xen-guest-utilities."
-printc "$OPTION" "2.  To fully upgrade the system and install Docker"
+printc "$OPTION" "2.  To install Docker"
 printc "$OPTION" "3.  To install or update xen-guest-utilities."
-printc "$OPTION" "4.  To make no changes and Exit."
+printc "$OPTION" "4.  To upgrade system"
+printc "$OPTION" "5.  To make no changes and Exit."
 echo
 
 # Prompt (in bold)
@@ -107,6 +108,12 @@ case "$choice" in
         ./install_xen_tools.sh
         ;;
     4)
+        printc "$SUCCESS" "You choose: To fully upgrade the system with Topgrade and Install xen-guest-utilities."
+        printc "$SUCCESS" "Running topgrade.sh ..."
+        chmod +x ./topgrade.sh
+        ./topgrade.sh
+        ;;
+    5)
         printc "$PROMPT" "You chose: exit. No changes will be made."
         exit 0
         ;;
