@@ -50,60 +50,28 @@ ensure_deb_get_installed
 # ────────────────────────────────────────────────────────
 # 5️⃣ Dotfiles – install for the regular user
 # ────────────────────────────────────────────────────────
-DOTFILES_DIR="$HOME/dotfiles"
-DOTFILES_FLAG="$DOTFILES_DIR/.installed"
-info "Installing dotfiles for regular user…"
-if [[ -d "$DOTFILES_DIR" ]]; then
-info "dotfiles directory already exists – pulling latest changes."
-git -C "$DOTFILES_DIR" pull --rebase
-else
-    info "Cloning root dotfiles repository."
-git clone https://github.com/flipsidecreations/dotfiles.git "$DOTFILES_DIR"
-fi
-if needs_update "$DOTFILES_FLAG"; then
-(cd "$DOTFILES_DIR" && ./install.sh)
-touch "$DOTFILES_FLAG"
-run_as_root chsh -s /bin/zsh
-else
-info "Dotfiles already installed – skipping install.sh."
-fi
-
-# ────────────────────────────────────────────────────────
-# 6️⃣ Dotfiles – install for root (using the same logic)
-# ────────────────────────────────────────────────────────
-ROOT_DOTFILES_DIR="/root/dotfiles"
-ROOT_DOTFILES_FLAG="/root/.dotfiles_installed"
-
-info "Installing dotfiles for root…"
-if [[ -d "$ROOT_DOTFILES_DIR" ]]; then
-    if [[ -d "$ROOT_DOTFILES_DIR/.git" ]]; then
-        info "dotfiles directory already exists – pulling latest changes."
-        run_as_root git -C "$ROOT_DOTFILES_DIR" pull --rebase
-    else
-        warn "Existing directory is not a git repo; moving it to ${ROOT_DOTFILES_DIR}.bak"
-        run_as_root mv "$ROOT_DOTFILES_DIR" "${ROOT_DOTFILES_DIR}.bak"
-        run_as_root git clone https://github.com/flipsidecreations/dotfiles.git "$ROOT_DOTFILES_DIR"
-    fi
-    info "dotfiles directory already exists – pulling latest changes."
-    run_as_root git -C "$ROOT_DOTFILES_DIR" pull --rebase
-else
-info "Cloning root dotfiles repository."
-run_as_root git clone https://github.com/flipsidecreations/dotfiles.git "$ROOT_DOTFILES_DIR"
-fi
-if [[ ! -f "$ROOT_DOTFILES_FLAG" ]]; then
-(cd "$ROOT_DOTFILES_DIR" && sudo ./install.sh)
-run_as_root touch "$ROOT_DOTFILES_FLAG"
-run_as_root chsh -s /bin/zsh
-else
-info "Root dotfiles already installed – skipping install.sh."
-fi
-
+info "Starting as regular user"
+git clone https://github.com/flipsidecreations/dotfiles.git
+cd dotfiles
+./install.sh
+chsh -s /bin/zsh
+cd..
+# -----------------------------------------------------------------
+#    Dotfiles - Install for root
+# -----------------------------------------------------------------
+sudo -s <<EOF
+info "Now running as root"
+git clone https://github.com/flipsidecreations/dotfiles.git
+cd dotfiles
+./install.sh
+chsh -s /bin/zsh
+EOF
+infosudo "Back to regular user."
 # ────────────────────────────────────────────────────────
 # 7️⃣ System pre‑upgrade (optional but handy)
 # ────────────────────────────────────────────────────────
-info "Running a quick apt‑upgrade before topgrade."
+info "Running a quick apt‑update before topgrade."
 run_as_root apt-get update
-run_as_root apt-get upgrade -y
 
 # ────────────────────────────────────────────────────────
 # 8️⃣ System upgrade – Topgrade (idempotent)
