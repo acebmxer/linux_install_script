@@ -73,10 +73,10 @@ printc() {
 # 5.  Show the menu (colourised)
 # -------------------------------------------------------------
 clear
-printc "$HEADER" "To begin select of 1 of 3 options."
-printc "$OPTION" "1.  To install without Docker."
-printc "$OPTION" "2.  To install with Docker"
-printc "$OPTION" "3.  To install or update Xen Tools."
+printc "$HEADER" "To begin select of 1 of 4 options."
+printc "$OPTION" "1.  To fully upgrade the system with Topgrade and Install xen-guest-utilities."
+printc "$OPTION" "2.  To fully upgrade the system and install Docker"
+printc "$OPTION" "3.  To install or update xen-guest-utilities."
 printc "$OPTION" "4.  To make no changes and Exit."
 echo
 
@@ -89,19 +89,19 @@ read -r choice
 # -------------------------------------------------------------
 case "$choice" in
     1)
-        printc "$SUCCESS" "You chose: install without Docker."
-        printc "$SUCCESS" "Running setup_without_docker.sh ..."
-        chmod +x ./setup_without_docker.sh
-        ./setup_without_docker.sh
+        printc "$SUCCESS" "You choose: To fully upgrade the system with Topgrade and Install xen-guest-utilities."
+        printc "$SUCCESS" "Running topgrade.sh ..."
+        chmod +x ./topgrade.sh
+        ./topgrade.sh
         ;;
     2)
-        printc "$SUCCESS" "You chose: install with Docker."
+        printc "$SUCCESS" "You choose: To fully upgrade the system and install Docker."
         printc "$SUCCESS" "Running setup_with_docker.sh ..."
         chmod +x ./setup_with_docker.sh
         ./setup_with_docker.sh
         ;;
     3)
-        printc "$SUCCESS" "To install or update Xen Tools."
+        printc "$SUCCESS" "You choose: To install or update xen-guest-utilities."
         printc "$SUCCESS" "Running install_xen_tools.sh ..."
         chmod +x ./install_xen_tools.sh
         ./install_xen_tools.sh
