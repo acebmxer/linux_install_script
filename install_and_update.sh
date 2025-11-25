@@ -46,8 +46,8 @@ ensure_deb_get_installed
 # 5️⃣ Dotfiles – install for the regular user
 # ────────────────────────────────────────────────────────
 info "Starting as regular user"
-git clone https://github.com/flipsidecreations/dotfiles.git
-cd dotfiles
+git clone https://github.com/flipsidecreations/dotfiles.git:/$home/dotfiles
+cd /$home/dotfiles
 ./install.sh
 chsh -s /bin/zsh
 cd ..
@@ -56,8 +56,8 @@ cd ..
 # -----------------------------------------------------------------
 sudo -s <<EOF
 info "Now running as root"
-git clone https://github.com/flipsidecreations/dotfiles.git
-cd dotfiles
+git clone https://github.com/flipsidecreations/dotfiles.git:/$home/dotfiles
+cd /$home/dotfiles
 ./install.sh
 chsh -s /bin/zsh
 EOF
