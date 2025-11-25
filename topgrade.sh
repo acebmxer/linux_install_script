@@ -77,17 +77,13 @@ run_as_root apt-get update
 # ────────────────────────────────────────────────────────
 # 8️⃣ System upgrade – Topgrade (idempotent)
 # ────────────────────────────────────────────────────────
-needs_topgrade_update() {
-local current_version top_version
-current_version="$(topgrade --version | awk '{print $2}')"
-top_version="$(deb-get get topgrade | awk 'NR==1{print $2}')"
-[[ "$current_version" != "$top_version" ]]
-}
-if needs_topgrade_update; then
+info "Installing topgrade"
+deb-get install topgrade
+if error; then
 info "Updating topgrade to the newest deb-get‑supplied version …"
 deb-get upgrade topgrade
 else
-info "Topgrade already up‑to‑date."
+info "Topgrade has been installed or has been updated."
 fi
 
 info "Running topgrade …"
