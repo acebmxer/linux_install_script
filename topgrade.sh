@@ -101,23 +101,23 @@ EOF
 # --------------------------------------------------------------------
 # 7️⃣  5️⃣  Ensure Topgrade is at the correct version
 # --------------------------------------------------------------------
-REQUIRED_TOPGRADE_VERSION="v1.3.2"   # change as you wish
+REQUIRED_TOPGRADE_VERSION="v16.0.4-1"
 
 needs_topgrade_update() {
     if ! command -v topgrade >/dev/null 2>&1; then
-        return 0
+        return 0          # topgrade is missing → install
     fi
     local current
     current=$(topgrade --version | awk '{print $2}')
     if [[ "$current" != "$REQUIRED_TOPGRADE_VERSION" ]]; then
-        return 0
+        return 0          # wrong version → upgrade
     fi
-    return 1
+    return 1              # everything OK
 }
 
 if needs_topgrade_update; then
     info "Installing/upgrading Topgrade to $REQUIRED_TOPGRADE_VERSION …"
-    deb‑get install topgrade="$REQUIRED_TOPGRADE_VERSION"  # deb‑get is idempotent
+    deb-get install topgrade="$REQUIRED_TOPGRADE_VERSION"   # <-- ASCII hyphen
 else
     info "Topgrade already at $REQUIRED_TOPGRADE_VERSION – skipping."
 fi
