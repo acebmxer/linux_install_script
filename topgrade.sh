@@ -76,14 +76,16 @@ run_as_root apt-get update
 # ────────────────────────────────────────────────────────
 # 8️⃣ System install – Topgrade (idempotent)
 # ────────────────────────────────────────────────────────
+
 # Check if topgrade is installed
-deb-get query topgrade > /dev/null 2>&1
+deb-get show topgrade | awk '/Installed:/{if ($2 == "Yes") {exit 0} else {exit 1}}'
 if [ $? -ne 0 ]; then
   info "Topgrade is not installed. Installing..."
   deb-get install topgrade
 else
   info "Topgrade already installed."
 fi
+
 deb-get upgrade topgrade
 info "Topgrade already up‑to‑date."
 info "Running topgrade …"
