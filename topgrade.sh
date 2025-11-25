@@ -23,7 +23,7 @@ run_as_root() {
 
 # Ensure dependencies are installed
 run_as_root apt install -y curl lsb-release wget
-run_as_root curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | sudo -E bash -s install deb-get
+run_as_root curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | run_as_root -E bash -s install deb-get
 
 info() {
   echo "INFO: $1"
