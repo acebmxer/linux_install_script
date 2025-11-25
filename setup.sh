@@ -77,7 +77,7 @@ printc "$HEADER" "To begin select of 1 of 4 options."
 printc "$OPTION" "1.  To fully upgrade the system with Topgrade and Install xen-guest-utilities."
 printc "$OPTION" "2.  To install Docker"
 printc "$OPTION" "3.  To install or update xen-guest-utilities."
-printc "$OPTION" "4.  To upgrade system"
+printc "$OPTION" "4.  To update your system"
 printc "$OPTION" "5.  To make no changes and Exit."
 echo
 
@@ -91,9 +91,9 @@ read -r choice
 case "$choice" in
     1)
         printc "$SUCCESS" "You choose: To fully upgrade the system with Topgrade and Install xen-guest-utilities."
-        printc "$SUCCESS" "Running topgrade.sh ..."
-        chmod +x ./topgrade.sh
-        ./topgrade.sh
+        printc "$SUCCESS" "Running install_and_update.sh ..."
+        chmod +x ./install_and_update.sh
+        ./install_and_update.sh
         ;;
     2)
         printc "$SUCCESS" "You choose: To fully upgrade the system and install Docker."
@@ -108,7 +108,7 @@ case "$choice" in
         ./install_xen_tools.sh
         ;;
     4)
-        printc "$SUCCESS" "You choose: To fully upgrade the system with Topgrade and Install xen-guest-utilities."
+        printc "$SUCCESS" "You choose: To run updates on your system."
         printc "$SUCCESS" "Running topgrade.sh ..."
         chmod +x ./topgrade.sh
         ./topgrade.sh
