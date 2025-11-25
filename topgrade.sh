@@ -37,4 +37,25 @@ deb-get install topgrade
 info "Running topgrade …"
 # Run as the user; Topgrade will auto‑install missing packages
 topgrade --yes --cleanup
+# -----------------------------------------------------------------
+#  🔄  Reboot prompt – now or later?
+# -----------------------------------------------------------------
+echo
+info "The installation is finished. A reboot is recommended to apply all changes."
+read -rp "Reboot now? (y/N) " REBOOT_CHOICE
+REBOOT_CHOICE=${REBOOT_CHOICE:-N}
+case "$REBOOT_CHOICE" in
+  y|Y|yes|YES)
+    info "Rebooting…"
+    run_as_root reboot
+    ;;
+  n|N|no|NO)
+    warn "Remember to reboot the server later to complete the setup."
+    ;;
+  *)
+    error "Unexpected input – exiting without reboot."
+    ;;
+esac
+# If we reach this point, the script has already rebooted (or not).
+# No further action is required.
 exit 0
