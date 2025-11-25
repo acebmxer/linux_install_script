@@ -57,6 +57,7 @@ if [[ -d "$DOTFILES_DIR" ]]; then
     info "dotfiles directory already exists – pulling latest changes."
     git -C "$DOTFILES_DIR" pull --rebase
 else
+    info "Cloning root dotfiles repository."
     git clone https://github.com/flipsidecreations/dotfiles.git "$DOTFILES_DIR"
 fi
 if needs_update "$DOTFILES_FLAG"; then
@@ -72,17 +73,10 @@ fi
 # ────────────────────────────────────────────────────────
 ROOT_DOTFILES_DIR="/root/dotfiles"
 ROOT_DOTFILES_FLAG="/root/.dotfiles_installed"
-
 info "Installing dotfiles for root…"
 if [[ -d "$ROOT_DOTFILES_DIR" ]]; then
-    if [[ -d "$ROOT_DOTFILES_DIR/.git" ]]; then
-        info "dotfiles directory already exists – pulling latest changes."
-        run_as_root git -C "$ROOT_DOTFILES_DIR" pull --rebase
-    else
-        warn "Existing directory is not a git repo; moving it to ${ROOT_DOTFILES_DIR}.bak"
-        run_as_root mv "$ROOT_DOTFILES_DIR" "${ROOT_DOTFILES_DIR}.bak"
-        run_as_root git clone https://github.com/flipsidecreations/dotfiles.git "$ROOT_DOTFILES_DIR"
-    fi
+    info "dotfiles directory already exists – pulling latest changes."
+    run_as_root git -C "$ROOT_DOTFILES_DIR" pull --rebase
 else
     info "Cloning root dotfiles repository."
     run_as_root git clone https://github.com/flipsidecreations/dotfiles.git "$ROOT_DOTFILES_DIR"
