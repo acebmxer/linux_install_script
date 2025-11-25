@@ -20,15 +20,14 @@ run_as_root() {
 # ────────────────────────────────────────────────────────
 # 8️⃣ System upgrade – Topgrade (idempotent)
 # ────────────────────────────────────────────────────────
-
 # Ensure dependencies are installed
 run_as_root apt install -y curl lsb-release wget
 run_as_root curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | run_as_root -E bash -s install deb-get
 
+# Redefine info() and error() *after* deb-get is installed
 info() {
   echo "INFO: $1"
 }
-
 error() {
   echo "ERROR: $1"
   exit 1
@@ -42,9 +41,7 @@ if error; then
 else
   info "Topgrade has been installed or has been updated."
 fi
-
 info "Running topgrade …"
 # Run as the user; Topgrade will auto‑install missing packages
 topgrade -y
-
 exit 0
