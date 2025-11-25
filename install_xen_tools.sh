@@ -35,7 +35,7 @@ check_and_handle_xe_guest_tools() {
         case "$ans" in
             y|Y|yes|Yes)
                 info "Uninstalling existing xe-guest-utilities..."
-                run_as_root apt-get remove -y xe-guest-utilities || warn "Failed to remove xe-guest-utilities."
+                run_as_root apt-get purge -y xe-guest-utilities || warn "Failed to remove xe-guest-utilities."
                 ;;
             *)
                 info "Keeping existing xe-guest-utilities; skipping installation."
@@ -58,7 +58,7 @@ check_and_handle_xen_guest_agent() {
         case "$ans" in
             y|Y|yes|Yes)
                 info "Uninstalling existing xen-guest-agent..."
-                run_as_root apt-get remove -y xen-guest-agent || warn "Failed to remove xen-guest-agent."
+                run_as_root apt-get purge -y xen-guest-agent || warn "Failed to remove xen-guest-agent."
                 ;;
             *)
                 info "Keeping existing xen-guest-agent; skipping installation."
