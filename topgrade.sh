@@ -55,7 +55,7 @@ git clone https://github.com/flipsidecreations/dotfiles.git
 cd dotfiles
 ./install.sh
 chsh -s /bin/zsh
-cd..
+cd ..
 # -----------------------------------------------------------------
 #    Dotfiles - Install for root
 # -----------------------------------------------------------------
