@@ -18,41 +18,47 @@
 
 set -euo pipefail
 
-# ------------------------------------------------------------------
-# Helper functions
-# ------------------------------------------------------------------
-run_as_root() {
-    # Execute the given command with elevated privileges.
-    # The '-E' flag preserves the environment (useful for
-    # passing variables like DEBIAN_FRONTEND to apt).
-    sudo -E "$@"
+# ----- Helper functions -------------------------------------------------
+run_as_root() { sudo -E "$@"; }
+info()        { printf '\e[32m[INFO]\e[0m %s\n' "$*"; }
+warn()        { printf '\e[33m[WARN]\e[0m %s\n' "$*"; }
+error()       { printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2; }
+
+# ---------- Desired Topgrade version ----------
+REQUIRED_TOPGRADE_VERSION="2.3.0"
+
+# ---------- Helper to decide if an update is needed ----------
+needs_topgrade_update() {
+    if ! command -v topgrade >/dev/null 2>&1; then
+        info "Topgrade not found – will install."
+        return 0
+    fi
+    INSTALLED=$(topgrade --version | awk '{print $2}')
+    if [[ -z $INSTALLED ]]; then
+        INSTALLED=$(dpkg -s topgrade 2>/dev/null | grep '^Version:' | awk '{print $2}')
+    fi
+    if [[ -z $INSTALLED ]]; then
+        warn "Could not determine Topgrade version – will reinstall."
+        return 0
+    fi
+    if dpkg --compare-versions "$INSTALLED" lt "$REQUIRED_TOPGRADE_VERSION"; then
+        info "Installed Topgrade ($INSTALLED) < required ($REQUIRED_TOPGRADE_VERSION) – will upgrade."
+        return 0
+    fi
+    info "Installed Topgrade ($INSTALLED) satisfies requirement ($REQUIRED_TOPGRADE_VERSION)."
+    return 1
 }
 
-info() {
-    # Simple info printer – can be extended with colors if desired.
-    printf '\e[32m[INFO]\e[0m %s\n' "$*"
-}
+# ---------- 6️⃣  Topgrade – download & install (idempotent + version check) ----------
+if needs_topgrade_update; then
+    info "Installing/Upgrading Topgrade (desired: $REQUIRED_TOPGRADE_VERSION)…"
+    deb-get install topgrade
+    # deb-get install topgrade="$REQUIRED_TOPGRADE_VERSION"   # if you want that exact release
+else
+    info "Topgrade already at required version – skipping install."
+fi
 
-warn() {
-    printf '\e[33m[WARN]\e[0m %s\n' "$*"
-}
-
-error() {
-    printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2
-}
-
-# ------------------------------------------------------------------
-# ---------------------------------------------------------------------------------
-# 6️⃣  Topgrade – download & install
-# -------------------------------------------------------------------------------------------------
-run_as_root apt install curl lsb-release wget
-curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | sudo -E bash -s install deb-get
-deb-get install topgrade
-# -------------------------------------------------------------------------------------------------
-# 👉  **Run Topgrade immediately after installation**
-# -------------------------------------------------------------------------------------------------
 info "Running Topgrade to upgrade the system …"
-# `--yes` (or `-y`) skips the interactive confirmation
 topgrade --yes
 # -------------------------------------------------------------------------------------------------
 # 9️⃣  Final summary
