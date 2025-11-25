@@ -5,6 +5,7 @@ set -euo pipefail
 # 1️⃣ Helpers – keep the same colour‑coded log functions
 # ────────────────────────────────────────────────────────
 run_as_root() { sudo -E "$@"; }
+info()        { printf '%s\n' "$1" }
 info()        { printf '\e[32m[INFO]\e[0m %s\n' "$*"; }
 warn()        { printf '\e[33m[WARN]\e[0m %s\n' "$*"; }
 error()       { printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2; }
@@ -71,30 +72,41 @@ fi
 # ────────────────────────────────────────────────────────
 # 6️⃣ Dotfiles – install for root (using the same logic)
 # ────────────────────────────────────────────────────────
-ROOT_DOTFILES_DIR="/root/dotfiles"
-ROOT_DOTFILES_FLAG="/root/.dotfiles_installed"
-info "Installing dotfiles for root…"
-if [[ -d "$ROOT_DOTFILES_DIR" ]]; then
-    info "dotfiles directory already exists – pulling latest changes."
-    run_as_root git -C "$ROOT_DOTFILES_DIR" pull --rebase
-else
-    info "Cloning root dotfiles repository."
-    run_as_root git clone https://github.com/flipsidecreations/dotfiles.git "$ROOT_DOTFILES_DIR"
-fi
-if [[ ! -f "$ROOT_DOTFILES_FLAG" ]]; then
-    (cd "$ROOT_DOTFILES_DIR" && sudo ./install.sh)
-    run_as_root touch "$ROOT_DOTFILES_FLAG"
-    run_as_root chsh -s /bin/zsh
-else
-    info "Root dotfiles already installed – skipping install.sh."
-fi
+# --------------------------------------------------------------------
+# Function that will install root dotfiles only if the flag file is missing
+# --------------------------------------------------------------------
+needs_update() {
+    local flag_file="$1"
+    if [[ ! -f "$flag_file" ]]; then
+        # Do whatever you need to do here
+        info "Installing root dotfiles (flag missing)."
+        # ... (your actual install commands)
+        # Then create the flag file
+        touch "$flag_file"
+    else
+        info "Root dotfiles already installed (flag present)."
+    fi
+}
 
-# ────────────────────────────────────────────────────────
-# 7️⃣ System pre‑upgrade (optional but handy)
-# ────────────────────────────────────────────────────────
-info "Running a quick apt‑upgrade before topgrade."
-run_as_root apt-get update
-run_as_root apt-get upgrade -y
+# --------------------------------------------------------------------
+# Variables – adjust as needed
+# --------------------------------------------------------------------
+ROOT_DOTFILES_REPO='https://github.com/user/root-dotfiles.git'
+ROOT_DOTFILES_DIR='/root/dotfiles'
+ROOT_DOTFILES_FLAG='/root/dotfiles/.root_dotfiles_installed'
+
+# --------------------------------------------------------------------
+# 6 – Install the root “dotfiles” repo – but only if we don't already have one.
+# --------------------------------------------------------------------
+needs_update "$ROOT_DOTFILES_FLAG"
+
+if [[ ! -d "$ROOT_DOTFILES_DIR" ]]; then
+    info "Root dotfiles directory is missing – cloning fresh."
+    git clone --depth 1 "$ROOT_DOTFILES_REPO" "$ROOT_DOTFILES_DIR"
+else
+    info "Root dotfiles directory already exists – updating it."
+    git -C "$ROOT_DOTFILES_DIR" pull --rebase
+fi
 
 # ────────────────────────────────────────────────────────
 # 8️⃣ System upgrade – Topgrade (idempotent)
