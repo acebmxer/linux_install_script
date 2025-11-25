@@ -97,9 +97,9 @@ case "$choice" in
         ;;
     2)
         printc "$SUCCESS" "You choose: To fully upgrade the system and install Docker."
-        printc "$SUCCESS" "Running setup_with_docker.sh ..."
-        chmod +x ./setup_with_docker.sh
-        ./setup_with_docker.sh
+        printc "$SUCCESS" "Running install_docker.sh ..."
+        chmod +x ./install_docker.sh
+        ./install_docker.sh
         ;;
     3)
         printc "$SUCCESS" "You choose: To install or update xen-guest-utilities."
