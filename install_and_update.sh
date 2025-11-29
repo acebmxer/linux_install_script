@@ -19,7 +19,7 @@ local flag_file="$1"
 # ────────────────────────────────────────────────────────
 # Install prereq for timezone change.
 # ────────────────────────────────────────────────────────
-apt-get update && sudo apt-get install jq tzdata
+run_as_root apt-get update && sudo apt-get install jq tzdata
 # ────────────────────────────────────────────────────────
 # 3️⃣ Timezone  - change the timezone
 # ────────────────────────────────────────────────────────
