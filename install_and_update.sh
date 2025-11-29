@@ -15,12 +15,6 @@ local flag_file="$1"
 [[ ! -f "$flag_file" ]] && return 0 || return 1
 }
 # ────────────────────────────────────────────────────────
-# Delete default Ubuntu user account
-# ────────────────────────────────────────────────────────
-warn Deleting the default Ubuntu user account
-run_as_root userdel ubuntu
-warn The default Ubuntu user account has been delete 
-# ────────────────────────────────────────────────────────
 # 3️⃣ Timezone – only set if not already America/New_York
 # ────────────────────────────────────────────────────────
 TARGET_TZ="/usr/share/zoneinfo/America/New_York"
@@ -68,25 +62,6 @@ cd ~/dotfiles
 chsh -s /bin/zsh
 EOF
 info "Back to regular user."
-# ────────────────────────────────────────────────────────
-# 7️⃣ System pre‑upgrade (optional but handy)
-# ────────────────────────────────────────────────────────
-info "Running a quick apt‑update before topgrade."
-run_as_root apt-get update
-# ────────────────────────────────────────────────────────
-# 8️⃣ System upgrade – Topgrade (idempotent)
-# ────────────────────────────────────────────────────────
-info "Installing topgrade"
-deb-get install topgrade
-if error; then
-info "Updating topgrade to the newest deb-get‑supplied version …"
-deb-get upgrade topgrade
-else
-info "Topgrade has been installed or has been updated."
-fi
-info "Running topgrade …"
-# Run as the user; Topgrade will auto‑install missing packages
-topgrade -y
 # ────────────────────────────────────────────────────────
 # 9️⃣ xen‑guest‑utilities – install / upgrade (root)
 # ────────────────────────────────────────────────────────
@@ -195,6 +170,26 @@ run_as_root umount /mnt || warn "Failed to unmount /mnt – you may need to unmo
 info "Pausing for 10 seconds to let services start..."
 sleep 10
 info "XCP‑NG Tools installation completed."
+# ────────────────────────────────────────────────────────
+# 7️⃣ System pre‑upgrade (optional but handy)
+# ────────────────────────────────────────────────────────
+info "Running a quick apt‑update before topgrade."
+run_as_root apt-get update
+# ────────────────────────────────────────────────────────
+# 8️⃣ System upgrade – Topgrade (idempotent)
+# ────────────────────────────────────────────────────────
+info "Installing topgrade"
+deb-get install topgrade
+if error; then
+info "Updating topgrade to the newest deb-get‑supplied version …"
+deb-get upgrade topgrade
+else
+info "Topgrade has been installed or has been updated."
+fi
+info "Running topgrade …"
+# Run as the user; Topgrade will auto‑install missing packages
+topgrade -y
+warn The system is fully updated and need to be reboot to apply changes!!
 # ────────────────────────────────────────────────────────
 # 10️⃣ Ask the user if they want to reboot
 # ────────────────────────────────────────────────────────
