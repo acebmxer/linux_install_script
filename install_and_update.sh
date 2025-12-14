@@ -116,33 +116,40 @@ ensure_deb_get_installed() {
 }
 ensure_deb_get_installed || warn "deb-get installation had issues"
 # ────────────────────────────────────────────────────────
+# 4️⃣ Ensure deb-get is installed
+# ────────────────────────────────────────────────────────
+ensure_deb_get_installed() {
+if ! command -v deb-get >/dev/null 2>&1; then
+info "deb-get not found – installing prerequisites."
+run_as_root apt-get update
+run_as_root apt-get install -y curl lsb-release wget
+info "Installing deb-get."
+curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | sudo -E bash -s install deb-get
+else
+info "deb-get is already installed."
+fi
+}
+ensure_deb_get_installed
+# ────────────────────────────────────────────────────────
 # 5️⃣ Dotfiles – install for the regular user
 # ────────────────────────────────────────────────────────
-info "Installing user dotfiles for invoking user"
-INVOKING_USER="${SUDO_USER:-${USER}}"
-USER_HOME=$(eval echo "~$INVOKING_USER")
-if ! command -v git >/dev/null 2>&1; then
-    run_as_root apt-get update
-    run_as_root apt-get install -y git || warn "git install failed"
-fi
-if [[ -d "$USER_HOME/dotfiles" ]]; then
-    info "Updating existing dotfiles in $USER_HOME/dotfiles"
-    run_as_user "git -C $USER_HOME/dotfiles pull --ff-only || true"
-else
-    info "Cloning dotfiles into $USER_HOME/dotfiles"
-    run_as_user "git clone https://github.com/flipsidecreations/dotfiles.git $USER_HOME/dotfiles"
-fi
-run_as_user "cd $USER_HOME/dotfiles && ./install.sh || true"
-
-info "Installing root dotfiles (if desired)"
-if [[ -d /root/dotfiles ]]; then
-    info "Updating /root/dotfiles"
-    run_as_root "git -C /root/dotfiles pull --ff-only || true"
-else
-    run_as_root "git clone https://github.com/flipsidecreations/dotfiles.git /root/dotfiles || true"
-fi
-run_as_root "cd /root/dotfiles && ./install.sh || true"
-info "Dotfiles setup attempted for user and root."
+info "Starting as regular user"
+git clone https://github.com/flipsidecreations/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./install.sh
+chsh -s /bin/zsh
+cd ..
+# -----------------------------------------------------------------
+#    Dotfiles - Install for root
+# -----------------------------------------------------------------
+sudo -s <<EOF
+info "Now running as root"
+git clone https://github.com/flipsidecreations/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./install.sh
+chsh -s /bin/zsh
+EOF
+info "Back to regular user."
 # ────────────────────────────────────────────────────────
 # 9️⃣ xen‑guest‑utilities – install / upgrade (root)
 # ────────────────────────────────────────────────────────
