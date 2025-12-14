@@ -50,11 +50,7 @@ if [[ -n "$current_tz" ]]; then
                     echo "Available timezones (sample):"
                     timedatectl list-timezones | head -n 40
                 else
-                    if python3 - <<'PY' 2>/dev/null; then
-import sys
-from importlib import util
-PY
-                    then
+                    if python3 -c 'import zoneinfo' >/dev/null 2>&1; then
                         python3 - <<'PY'
 import zoneinfo, json
 print('\n'.join(sorted(zoneinfo.available_timezones())))
