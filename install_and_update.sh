@@ -62,7 +62,6 @@ PY
                 read -r -p "Enter the timezone you want to set (e.g., America/Los_Angeles): " new_tz
                 if [[ -z "$new_tz" ]]; then
                     info "No timezone entered. Skipping timezone change."
-                    ;;
                 fi
                 # Prefer timedatectl when available (systemd systems)
                 if command -v timedatectl >/dev/null 2>&1; then
