@@ -220,6 +220,41 @@ ensure_installer() {
     fi
 }
 # --------------------------------------------------------------
+# Remove known packages that commonly conflict with XCP‑NG tools
+# --------------------------------------------------------------
+remove_conflicting_packages() {
+    info "Checking for packages that may conflict with XCP‑NG tools"
+    local pkgs=(open-vm-tools open-vm-tools-desktop virtualbox-guest-utils virtualbox-guest-dkms vmware-tools-* qemu-guest-agent)
+    local found=()
+    for p in "${pkgs[@]}"; do
+        if dpkg -s "$p" > /dev/null 2>&1; then
+            found+=("$p")
+        fi
+    done
+
+    if [[ ${#found[@]} -eq 0 ]]; then
+        info "No known conflicting packages found."
+        return 0
+    fi
+
+    info "Potentially conflicting packages detected: ${found[*]}"
+    if [[ "$NONINTERACTIVE" -eq 1 ]]; then
+        info "Non-interactive mode: purging ${found[*]}"
+        run_as_root apt-get purge -y "${found[@]}" || warn "Failed to remove some packages."
+    else
+        read -rp "Remove these packages? [y/N] " ans
+        case "$ans" in
+            y|Y|yes|Yes)
+                run_as_root apt-get purge -y "${found[@]}" || warn "Failed to remove some packages."
+                ;;
+            *)
+                info "Skipping removal of conflicting packages."
+                ;;
+        esac
+    fi
+    return 0
+}
+# --------------------------------------------------------------
 # 5️⃣  Run the installation
 # --------------------------------------------------------------
 mount_iso
