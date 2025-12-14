@@ -275,8 +275,8 @@ info "Running a quick apt‑update before topgrade."
 run_as_root apt-get update
 
 # System upgrade – Topgrade (idempotent)
-info "Installing/updating topgrade via deb-get"
-if run_as_root deb-get install -y topgrade; then
+info "Installing/upgradeing topgrade via deb-get"
+if run_as_root deb-get install topgrade; then
     info "Topgrade installed/updated via deb-get."
 else
     warn "deb-get failed to install topgrade; attempting deb-get upgrade topgrade"
