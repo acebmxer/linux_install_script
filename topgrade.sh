@@ -20,11 +20,12 @@ run_as_root() {
 # ────────────────────────────────────────────────────────
 # 8️⃣ System upgrade – Topgrade (idempotent)
 # ────────────────────────────────────────────────────────
+info "Updating tograde"
 deb-get update topgrade
 # Removed the if error block
 info "Running topgrade …"
 # Run as the user; Topgrade will auto‑install missing packages
-topgrade -y
+topgrade
 info "Running topgrade cleanup …"
 topgrade -c
 # -----------------------------------------------------------------
