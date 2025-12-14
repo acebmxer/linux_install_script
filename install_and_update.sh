@@ -196,8 +196,7 @@ fi
 # 2️⃣  Mount the ISO if it isn’t already mounted
 # --------------------------------------------------------------
 mount_iso() {
-    local mount_point="/mnt/xcpng_installer_$$"
-    mkdir -p "$mount_point"
+    local mount_point="/mnt/"
     if mountpoint -q "$mount_point"; then
         info "ISO already mounted at $mount_point."
     else
