@@ -8,10 +8,4 @@ This scrtip sets the timezone to Est, install dotfile, and XCP-NG tools. It also
 git clone "https://github.com/acebmxer/linux_setup_script.git"
 cd linux_setup_script && chmod +x * && bash setup.sh
 ```
-### Force a light theme (works even if the terminal is dark
-SETUP_THEME=light ./setup.sh
-
-### Force a dark theme
-SETUP_THEME=dark ./setup.sh
-
 Each script file can be ran seuperalty if you wanted to.
