@@ -37,6 +37,7 @@ fi
 #
 #  The user can force a theme with SETUP_THEME=light|dark
 # -------------------------------------------------------------
+SETUP_THEME=dark
 theme="dark"            # default
 if [[ -n "${SETUP_THEME}" ]]; then
     case "${SETUP_THEME,,}" in
