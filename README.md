@@ -8,4 +8,3 @@ This scrtip sets the timezone to Est, install dotfile, and XCP-NG tools and full
 git clone "https://github.com/acebmxer/linux_setup_script.git"
 cd linux_setup_script && chmod +x * && bash setup.sh
 ```
-Each script file can be ran seuperalty if you wanted to.

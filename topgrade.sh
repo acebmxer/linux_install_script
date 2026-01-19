@@ -1,14 +1,17 @@
 #!/bin/bash
+set -euo pipefail
+# ==========================================================
 # This script is fully self‑contained: it re‑defines the helper
 # functions `log`, `info`, `warn`, `error`, `run_as_root`) that
 # the original file used and then runs the Xen‑Tools installer.
 #
 # ---------------------------------------------------------------
 # Helper functions (copied from your main script – do **not** modify)
-log()   { echo "[LOG]   $*"; }
-info()  { echo "[INFO]  $*"; }
-warn()  { echo "[WARN]  $*" >&2; }
-error() { echo "[ERROR] $*" >&2; }
+run_as_root() { sudo -E bash -c "$*"; }
+run_as_user() { local user="${SUDO_USER:-${USER}}"; sudo -u "$user" -H bash -c "$*"; }
+info()  { printf '\e[32m[INFO]\e[0m %s\n' "$*" | tee -a "$log_file"; }
+warn()  { printf '\e[33m[WARN]\e[0m %s\n' "$*" | tee -a "$log_file"; }
+error() { printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2 | tee -a "$log_file"; }
 # Only run as root when needed
 run_as_root() {
     if [[ "$(id -u)" -eq 0 ]]; then
