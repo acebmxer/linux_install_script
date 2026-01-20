@@ -107,7 +107,7 @@ printc "$OPTION" "7.  To make no changes and Exit."
 echo
 
 # Prompt (in bold)
-printf "%bEnter choice [1-3]: %b" "$PROMPT" "$RESET"
+printf "%bEnter choice [1-7]: %b" "$PROMPT" "$RESET"
 read -r choice
 
 # -------------------------------------------------------------
