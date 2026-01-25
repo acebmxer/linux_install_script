@@ -8,27 +8,19 @@ run_as_user() { local user="${SUDO_USER:-${USER}}"; sudo -u "$user" -H bash -c "
 info()  { printf '\e[32m[INFO]\e[0m %s\n' "$*" | tee -a "$log_file"; }
 warn()  { printf '\e[33m[WARN]\e[0m %s\n' "$*" | tee -a "$log_file"; }
 error() { printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2 | tee -a "$log_file"; }
-# ────────────────────────────────────────────────────────
-# 2️⃣ Idempotency helper
-# ────────────────────────────────────────────────────────
-needs_update() {
-    local flag_file="$1"
-    [[ ! -f "$flag_file" ]]
-}
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 # Install prereq for timezone change and basic tools.
 run_as_root apt-get update
-run_as_root apt-get install -y --no-install-recommends jq tzdata git curl wget python3 python3-venv || true
-# ────────────────────────────────────────────────────────
+run_as_root apt-get install -y --no-install-recommends jq tzdata git curl wget python3 python3-venv
+# ───────────────────────────────────────────────────────
 # 3️⃣ Timezone  - change the timezone
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 # TARGET_TZ="/usr/share/zoneinfo/America/New_York"
 LOCALTIME="/etc/localtime"
 current_tz="unknown"
 if [[ -e "$LOCALTIME" ]]; then
     current_tz=$(readlink -f "$LOCALTIME" | sed 's@^/usr/share/zoneinfo/@@' || true)
 fi
-
 # Non-interactive helper: set NONINTERACTIVE=1 or pass -y/--yes to skip prompts
 NONINTERACTIVE=${NONINTERACTIVE:-0}
 while [[ ${1:-} ]]; do
@@ -37,7 +29,6 @@ while [[ ${1:-} ]]; do
         *) break ;;
     esac
 done
-
 if [[ -n "$current_tz" ]]; then
     if [[ "$NONINTERACTIVE" -eq 1 ]]; then
         info "Current timezone: $current_tz (non-interactive mode: skipping change)"
@@ -96,10 +87,9 @@ PY
         esac
     fi
 fi
-
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 # 5️⃣ Dotfiles – install for the regular user
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 info "Starting as regular user"
 git clone https://github.com/flipsidecreations/dotfiles.git ~/dotfiles
 cd ~/dotfiles
@@ -117,15 +107,14 @@ cd ~/dotfiles
 chsh -s /bin/zsh
 EOF
 info "Back to regular user."
-# ────────────────────────────────────────────────────────
-# 7️⃣ System Update / upgrade 
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
+# 7️⃣ System Update / upgrade
+# ───────────────────────────────────────────────────────
 info "Running apt update / full-upgrade / auto-remove."
 run_as_root apt-get update -y && run_as_root apt-get full-upgrade -y && run_as_root apt-get autoremove -y
-
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 # 10️⃣ Ask the user if they want to reboot
-# ────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 if [[ "$NONINTERACTIVE" -eq 1 ]]; then
     info "Non-interactive mode: skipping reboot prompt (no reboot)."
 else
@@ -133,6 +122,6 @@ else
     if [[ "$ans" =~ ^[Yy]$ ]]; then
         run_as_root reboot
     else
-        info "You can reboot later whenever you’re ready."
+        info "You can reboot later whenever you're ready."
     fi
 fi
