@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+#-------------------------------------------------------------
+#   Helper Fucntions
+#-------------------------------------------------------------
+run_as_root() { sudo -E bash -c "$*"; }
+run_as_user() { local user="${SUDO_USER:-${USER}}"; sudo -u "$user" -H bash -c "$*"; }
+info()  { printf '\e[32m[INFO]\e[0m %s\n' "$*" | tee -a "$log_file"; }
+warn()  { printf '\e[33m[WARN]\e[0m %s\n' "$*" | tee -a "$log_file"; }
+error() { printf '\e[31m[ERROR]\e[0m %s\n' "$*" >&2 | tee -a "$log_file"; }
+
 # ───────────────────────────────────────────────────────
 # Install prereq for timezone change and basic tools.
 run_as_root apt-get update
